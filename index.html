@@ -3,189 +3,162 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>拿破仑的意志 - 琉璃孤独棋</title>
+    <title>拿破仑孤独棋 - 史诗重制版</title>
     <style type="text/css">
-        /* 基础样式修复 */
+        /* 根布局优化：确保不溢出 */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background: #c0c0c0;
-            display: flex; justify-content: center; align-items: center;
-            font-family: 'Segoe UI', 'Microsoft YaHei', serif;
-            user-select: none; -webkit-user-select: none;
+            overflow: hidden; background: #2c2c2c;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Times New Roman', serif;
         }
 
-        /* 拿破仑史诗弹窗 */
+        /* 拿破仑介绍弹窗 - 使用 Base64 内嵌图片 */
         #modalOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
         }
 
-        .rules-modal {
-            width: 85%; max-width: 360px; background: #fdf6e3;
-            border: 3px solid #8d6e63; border-radius: 8px; overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        .napoleon-card {
+            width: 85%; max-width: 350px; background: #f4e4bc;
+            border-radius: 12px; overflow: hidden; border: 4px solid #8d6e63;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center;
         }
 
-        .napoleon-header {
-            width: 100%; height: 240px;
-            /* 换了一个更稳定的维基百科缩略图源 */
-            background: #000 url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Napoleon4.jpg/480px-Napoleon4.jpg') no-repeat center center;
-            background-size: cover; border-bottom: 2px solid #8d6e63;
+        /* 这里是内嵌的拿破仑剪影图，确保 100% 显示 */
+        .napoleon-img {
+            width: 100%; height: 200px;
+            background: #000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🏇</text></svg>') no-repeat center center;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg/400px-David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg');
+            background-size: cover; border-bottom: 3px solid #8d6e63;
         }
 
-        .modal-body { padding: 20px; text-align: center; }
-        .modal-body h2 { color: #4e342e; margin: 0 0 10px; font-size: 1.4rem; }
-        .modal-body p { color: #5d4037; line-height: 1.6; font-size: 0.95rem; text-align: justify; min-height: 80px; }
+        .napoleon-content { padding: 20px; color: #4e342e; }
+        .napoleon-content h2 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; }
+        .napoleon-content p { font-size: 0.9rem; line-height: 1.6; text-align: justify; margin: 15px 0; }
 
-        .start-btn {
-            width: 100%; padding: 15px; border: none; background: #4e342e;
-            color: #f4e4bc; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+        .go-btn {
+            width: 100%; padding: 15px; background: #4e342e; color: #f4e4bc;
+            border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;
         }
 
-        /* 游戏区域 - 解决显示不全的问题 */
-        .game-container {
-            position: relative;
+        /* 游戏区域适配方案 */
+        .game-wrapper {
             display: flex; flex-direction: column; align-items: center;
-            /* 核心：根据屏幕宽度动态缩放棋盘 */
-            transform: scale(min(1, calc(100vw / 550)));
+            width: 100vw; height: 100vh; justify-content: space-around;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
         }
 
-        .score-board {
-            margin-bottom: 15px; width: 100%; display: flex;
-            justify-content: space-between; align-items: center;
-            font-weight: bold; color: #4e342e;
-        }
+        .game-info { color: #f4e4bc; font-size: 1.2rem; display: flex; gap: 20px; align-items: center; }
 
-        /* 琉璃木质棋盘 */
+        /* 棋盘：使用 CSS 变量动态计算大小，确保不超出屏幕 */
         #gameBoard {
+            --board-size: min(90vw, 80vh);
+            width: var(--board-size); height: var(--board-size);
             background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
-            border-spacing: 10px; padding: 30px; border-radius: 50%;
-            border: 12px solid #b3865c; box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            border: 8px solid #b3865c; border-radius: 50%;
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            padding: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
 
-        /* 棋穴与珠子样式 */
         .cell {
-            width: 65px; height: 65px; border-radius: 50%;
-            background: #5d4037; position: relative; cursor: pointer;
-            box-shadow: inset 3px 4px 10px rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            position: relative;
         }
 
-        .cell::before {
-            content: ""; display: block; width: 100%; height: 100%; border-radius: 50%;
-            opacity: 0; transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        .piece-slot {
+            width: 85%; height: 85%; border-radius: 50%;
+            background: #4a332d; box-shadow: inset 2px 2px 8px rgba(0,0,0,0.6);
+            cursor: pointer; position: relative;
         }
 
-        .has-piece::before { opacity: 1; }
-
-        /* 琉璃色彩定义 */
-        .cell[data-color="1"]::before { background: radial-gradient(circle at 35% 35%, #ff4d6d, #c9184a); }
-        .cell[data-color="2"]::before { background: radial-gradient(circle at 35% 35%, #00b4d8, #0077b6); }
-        .cell[data-color="3"]::before { background: radial-gradient(circle at 35% 35%, #70e000, #38b000); }
-        .cell[data-color="4"]::before { background: radial-gradient(circle at 35% 35%, #ffb703, #fb8500); }
-        .cell[data-color="5"]::before { background: radial-gradient(circle at 35% 35%, #bdb2ff, #9381ff); }
-
-        .selected::before {
-            transform: scale(1.15) translateY(-8px);
-            filter: brightness(1.2);
-            box-shadow: 0 15px 20px rgba(0,0,0,0.4);
+        /* 琉璃珠子 */
+        .has-piece::after {
+            content: ""; position: absolute; inset: 5%; border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .empty-slot { width: 65px; height: 65px; }
+        .piece-slot[data-color="1"]::after { background: radial-gradient(circle at 30% 30%, #ff5f6d, #b91d1d); }
+        .piece-slot[data-color="2"]::after { background: radial-gradient(circle at 30% 30%, #4facfe, #003399); }
+        .piece-slot[data-color="3"]::after { background: radial-gradient(circle at 30% 30%, #43e97b, #1b5e20); }
+        .piece-slot[data-color="4"]::after { background: radial-gradient(circle at 30% 30%, #f6d365, #e65100); }
+        .piece-slot[data-color="5"]::after { background: radial-gradient(circle at 30% 30%, #a18cd1, #4a148c); }
 
-        .dust {
-            position: absolute; inset: 0; border-radius: 50%;
-            background: rgba(255,255,255,0.4); animation: pop 0.4s ease-out;
+        .selected::after { transform: scale(1.2) translateY(-5px); filter: brightness(1.2); box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
+        
+        .reset-btn {
+            background: none; border: 1px solid #f4e4bc; color: #f4e4bc;
+            padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;
         }
-        @keyframes pop { from {transform: scale(0.5); opacity: 1;} to {transform: scale(2); opacity: 0;} }
     </style>
 </head>
 <body>
 
 <div id="modalOverlay">
-    <div class="rules-modal">
-        <div class="napoleon-header"></div>
-        <div class="modal-body">
-            <h2>拿破仑的博弈</h2>
-            <p id="typedText"></p>
-            <button class="start-btn" id="startBtn" style="visibility:hidden">踏入战场</button>
+    <div class="napoleon-card">
+        <div class="napoleon-img"></div>
+        <div class="napoleon-content">
+            <h2>Solo Noble</h2>
+            <p>1799年，拿破仑翻越阿尔卑斯山时，常在行营中以此棋思索战略。棋盘如战场，移除一颗棋子，开始你的博弈。目标：最后只留一颗珠子。</p>
+            <button class="go-btn" onclick="start()">开启征程</button>
         </div>
     </div>
 </div>
 
-<div class="game-container">
-    <div class="score-board">
-        <span id="score">剩余残兵：37</span>
-        <button onclick="location.reload()" style="padding:5px 10px; border:1px solid #8d6e63; background:none; color:#8d6e63; border-radius:4px;">重整阵地</button>
+<div class="game-wrapper">
+    <div class="game-info">
+        <span id="scoreText">残余兵力：37</span>
+        <button class="reset-btn" onclick="location.reload()">重新集结</button>
     </div>
-    <table id="gameBoard"></table>
+    <div id="gameBoard"></div>
 </div>
 
 <script>
-    // 1. 剧情文字
-    const story = "相传在18世纪，被囚禁在监狱中的拿破仑将军发明了这种孤独棋。它不考验对手的计谋，只磨炼一个人的耐性与全局观。目标是像统帅那样，通过精准的跳跃消除，让棋盘最后只剩孤身一人。";
-    let i = 0;
-    function type() {
-        if (i < story.length) {
-            document.getElementById("typedText").innerHTML += story.charAt(i);
-            i++; setTimeout(type, 40);
-        } else {
-            document.getElementById("startBtn").style.visibility = "visible";
-        }
-    }
-    window.onload = type;
-
-    // 2. 隐藏弹窗
-    document.getElementById("startBtn").onclick = function() {
-        document.getElementById("modalOverlay").style.display = "none";
-        if(navigator.vibrate) navigator.vibrate(50);
-    };
-
-    // 3. 棋盘逻辑
-    const layout = [
-        [0,0,1,1,1,0,0], [0,1,1,1,1,1,0], [1,1,1,1,1,1,1], [1,1,1,1,1,1,1], 
+    const boardLayout = [
+        [0,0,1,1,1,0,0], [0,1,1,1,1,1,0], [1,1,1,1,1,1,1], [1,1,1,1,1,1,1],
         [1,1,1,1,1,1,1], [0,1,1,1,1,1,0], [0,0,1,1,1,0,0]
     ];
-    let isFirst = true, selected = null;
-    let board = document.getElementById("gameBoard");
 
-    layout.forEach((row, y) => {
-        let tr = document.createElement("tr");
+    let isFirst = true, selected = null;
+    const boardEl = document.getElementById('gameBoard');
+
+    // 初始化棋盘
+    boardLayout.forEach((row, y) => {
         row.forEach((cell, x) => {
-            let td = document.createElement("td");
+            const div = document.createElement('div');
+            div.className = 'cell';
             if (cell) {
-                td.className = "cell has-piece";
-                td.dataset.x = x; td.dataset.y = y;
-                td.dataset.color = Math.floor(Math.random()*5)+1;
-            } else {
-                td.className = "empty-slot";
+                const piece = document.createElement('div');
+                piece.className = 'piece-slot has-piece';
+                piece.dataset.x = x; piece.dataset.y = y;
+                piece.dataset.color = Math.floor(Math.random()*5)+1;
+                div.appendChild(piece);
             }
-            tr.appendChild(td);
+            boardEl.appendChild(div);
         });
-        board.appendChild(tr);
     });
 
-    board.addEventListener("click", e => {
-        const target = e.target.closest(".cell");
+    function start() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+
+    boardEl.addEventListener('click', (e) => {
+        const target = e.target.closest('.piece-slot');
         if (!target) return;
 
-        // 第一步：点击移除一颗
         if (isFirst) {
-            target.classList.remove("has-piece");
-            showPop(target);
-            isFirst = false;
-            updateUI();
-            return;
+            target.classList.remove('has-piece');
+            isFirst = false; updateUI(); return;
         }
 
-        // 选中逻辑
-        if (target.classList.contains("has-piece")) {
-            if (selected) selected.classList.remove("selected");
+        if (target.classList.contains('has-piece')) {
+            if (selected) selected.classList.remove('selected');
             selected = target;
-            target.classList.add("selected");
-        } 
-        // 跳跃逻辑
-        else if (selected) {
+            target.classList.add('selected');
+        } else if (selected) {
             const x1 = +selected.dataset.x, y1 = +selected.dataset.y;
             const x2 = +target.dataset.x, y2 = +target.dataset.y;
 
@@ -193,12 +166,11 @@
                 const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
                 const mid = document.querySelector(`[data-x="${mx}"][data-y="${my}"]`);
                 
-                if (mid && mid.classList.contains("has-piece")) {
+                if (mid && mid.classList.contains('has-piece')) {
                     target.dataset.color = selected.dataset.color;
-                    target.classList.add("has-piece");
-                    selected.classList.remove("has-piece", "selected");
-                    mid.classList.remove("has-piece");
-                    showPop(mid);
+                    target.classList.add('has-piece');
+                    selected.classList.remove('has-piece', 'selected');
+                    mid.classList.remove('has-piece');
                     selected = null;
                     updateUI();
                     if(navigator.vibrate) navigator.vibrate(30);
@@ -207,15 +179,10 @@
         }
     });
 
-    function showPop(el) {
-        let d = document.createElement("div"); d.className = "dust";
-        el.appendChild(d); setTimeout(()=>d.remove(), 400);
-    }
-
     function updateUI() {
-        const count = document.querySelectorAll(".has-piece").length;
-        document.getElementById("score").innerText = `剩余残兵：${count}`;
-        if (count === 1) alert("天佑统帅！您赢得了这场伟大的孤独博弈！");
+        const count = document.querySelectorAll('.has-piece').length;
+        document.getElementById('scoreText').innerText = `残余兵力：${count}`;
+        if(count === 1) alert("天佑统帅！您赢了。");
     }
 </script>
 </body>
