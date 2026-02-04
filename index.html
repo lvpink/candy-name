@@ -3,221 +3,219 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Solo Noble - 拿破仑孤独棋</title>
+    <title>拿破仑的意志 - 琉璃孤独棋</title>
     <style type="text/css">
-        /* 核心布局 */
+        /* 基础样式修复 */
         html, body {
-            margin: 0; padding: 0; width: 100%; height: 100vh;
-            overflow: hidden; background: #dcdcdc;
-            font-family: 'Times New Roman', 'Microsoft YaHei', serif;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: #c0c0c0;
             display: flex; justify-content: center; align-items: center;
+            font-family: 'Segoe UI', 'Microsoft YaHei', serif;
             user-select: none; -webkit-user-select: none;
         }
 
-        /* 修复后的全屏弹窗 */
+        /* 拿破仑史诗弹窗 */
         #modalOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1000; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.6s ease;
+            background: rgba(0,0,0,0.9); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .rules-modal {
-            width: 90%; max-width: 400px;
-            background: #fdf6e3; /* 象牙黄纸感 */
-            border: 2px solid #8d6e63;
-            border-radius: 4px; padding: 0;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            overflow: hidden;
-            display: flex; flex-direction: column;
+            width: 85%; max-width: 360px; background: #fdf6e3;
+            border: 3px solid #8d6e63; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
 
-        /* 拿破仑经典图展示区 */
-        .napoleon-frame {
-            width: 100%; height: 260px;
-            background: #000 url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg/800px-David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg') no-repeat center center;
-            background-size: cover;
-            border-bottom: 3px double #8d6e63;
+        .napoleon-header {
+            width: 100%; height: 240px;
+            /* 换了一个更稳定的维基百科缩略图源 */
+            background: #000 url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Napoleon4.jpg/480px-Napoleon4.jpg') no-repeat center center;
+            background-size: cover; border-bottom: 2px solid #8d6e63;
         }
 
-        .content-area { padding: 20px; text-align: center; }
+        .modal-body { padding: 20px; text-align: center; }
+        .modal-body h2 { color: #4e342e; margin: 0 0 10px; font-size: 1.4rem; }
+        .modal-body p { color: #5d4037; line-height: 1.6; font-size: 0.95rem; text-align: justify; min-height: 80px; }
 
-        .history-title {
-            color: #4e342e; font-size: 1.6rem; margin: 0 0 10px;
-            letter-spacing: 2px; font-weight: bold;
+        .start-btn {
+            width: 100%; padding: 15px; border: none; background: #4e342e;
+            color: #f4e4bc; font-size: 1.1rem; font-weight: bold; cursor: pointer;
         }
 
-        .history-text {
-            line-height: 1.8; color: #5d4037; text-align: justify;
-            font-size: 0.95rem; margin-bottom: 20px; min-height: 100px;
+        /* 游戏区域 - 解决显示不全的问题 */
+        .game-container {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            /* 核心：根据屏幕宽度动态缩放棋盘 */
+            transform: scale(min(1, calc(100vw / 550)));
         }
 
-        .confirm-btn {
-            background: #4e342e; color: #f4e4bc; border: none;
-            width: 100%; padding: 18px; font-size: 1.1rem;
-            font-weight: bold; cursor: pointer; letter-spacing: 4px;
+        .score-board {
+            margin-bottom: 15px; width: 100%; display: flex;
+            justify-content: space-between; align-items: center;
+            font-weight: bold; color: #4e342e;
         }
 
-        /* 游戏主体样式（琉璃棋子） */
-        .game-wrapper {
-            position: relative; padding: 20px;
-            transform: scale(min(1, 0.9 * (100vw / 600px)));
-        }
-
-        .hud {
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; margin-bottom: 20px; color: #5d4037; font-weight: bold;
-        }
-
+        /* 琉璃木质棋盘 */
         #gameBoard {
             background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
-            border-spacing: 10px; padding: 25px; border-radius: 50%;
-            border: 12px solid #b3865c; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            border-spacing: 10px; padding: 30px; border-radius: 50%;
+            border: 12px solid #b3865c; box-shadow: 0 15px 40px rgba(0,0,0,0.3);
         }
 
-        .allNum {
-            width: 68px; height: 68px; border-radius: 50%; cursor: pointer; position: relative;
-            background: #4a332d; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.5);
+        /* 棋穴与珠子样式 */
+        .cell {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: #5d4037; position: relative; cursor: pointer;
+            box-shadow: inset 3px 4px 10px rgba(0,0,0,0.5);
         }
 
-        .allNum::before {
+        .cell::before {
             content: ""; display: block; width: 100%; height: 100%; border-radius: 50%;
-            opacity: 0; transition: transform 0.2s, opacity 0.2s;
+            opacity: 0; transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
         .has-piece::before { opacity: 1; }
-        
-        /* 琉璃色系 */
-        .allNum[data-color="1"]::before { background: radial-gradient(circle at 35% 35%, #ff5f6d, #b91d1d); }
-        .allNum[data-color="2"]::before { background: radial-gradient(circle at 35% 35%, #4facfe, #003399); }
-        .allNum[data-color="3"]::before { background: radial-gradient(circle at 35% 35%, #43e97b, #1b5e20); }
-        .allNum[data-color="4"]::before { background: radial-gradient(circle at 35% 35%, #f6d365, #e65100); }
-        .allNum[data-color="5"]::before { background: radial-gradient(circle at 35% 35%, #a18cd1, #4a148c); }
 
-        .selected::before { transform: scale(1.1) translateY(-5px); filter: brightness(1.2); }
-        .zero { width: 68px; height: 68px; }
+        /* 琉璃色彩定义 */
+        .cell[data-color="1"]::before { background: radial-gradient(circle at 35% 35%, #ff4d6d, #c9184a); }
+        .cell[data-color="2"]::before { background: radial-gradient(circle at 35% 35%, #00b4d8, #0077b6); }
+        .cell[data-color="3"]::before { background: radial-gradient(circle at 35% 35%, #70e000, #38b000); }
+        .cell[data-color="4"]::before { background: radial-gradient(circle at 35% 35%, #ffb703, #fb8500); }
+        .cell[data-color="5"]::before { background: radial-gradient(circle at 35% 35%, #bdb2ff, #9381ff); }
 
-        /* 碎屑特效 */
-        .dust { position: absolute; inset: 0; background: rgba(255,255,255,0.3); border-radius: 50%; animation: pop 0.4s ease-out; pointer-events: none; }
-        @keyframes pop { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.5); opacity: 0; } }
+        .selected::before {
+            transform: scale(1.15) translateY(-8px);
+            filter: brightness(1.2);
+            box-shadow: 0 15px 20px rgba(0,0,0,0.4);
+        }
+
+        .empty-slot { width: 65px; height: 65px; }
+
+        .dust {
+            position: absolute; inset: 0; border-radius: 50%;
+            background: rgba(255,255,255,0.4); animation: pop 0.4s ease-out;
+        }
+        @keyframes pop { from {transform: scale(0.5); opacity: 1;} to {transform: scale(2); opacity: 0;} }
     </style>
 </head>
 <body>
 
 <div id="modalOverlay">
     <div class="rules-modal">
-        <div class="napoleon-frame"></div>
-        <div class="content-area">
-            <h2 class="history-title">SOLO NOBLE</h2>
-            <div class="history-text" id="typeWriter"></div>
-            <button class="confirm-btn" id="startBtn" style="display:none">踏入疆场</button>
+        <div class="napoleon-header"></div>
+        <div class="modal-body">
+            <h2>拿破仑的博弈</h2>
+            <p id="typedText"></p>
+            <button class="start-btn" id="startBtn" style="visibility:hidden">踏入战场</button>
         </div>
     </div>
 </div>
 
-<div class="game-wrapper">
-    <div class="hud">
-        <span id="scoreText">残余兵力：37</span>
-        <button onclick="location.reload()" style="background:none; border:1px solid #8d6e63; color:#8d6e63; border-radius:4px; padding:4px 10px;">重整棋局</button>
+<div class="game-container">
+    <div class="score-board">
+        <span id="score">剩余残兵：37</span>
+        <button onclick="location.reload()" style="padding:5px 10px; border:1px solid #8d6e63; background:none; color:#8d6e63; border-radius:4px;">重整阵地</button>
     </div>
     <table id="gameBoard"></table>
 </div>
 
 <script>
-    // 1. 叙事文案
-    const story = "1800年，拿破仑亲率大军翻越阿尔卑斯山。在幽静的行军营帐内，这种由37孔组成的「孤独棋」是他思索战略的最佳伴侣。棋盘如战场，进退皆生死。现在，请移除首枚棋子，开始你的博弈。";
-    let charIdx = 0;
-
-    function typeEffect() {
-        if (charIdx < story.length) {
-            document.getElementById("typeWriter").innerHTML += story.charAt(charIdx);
-            charIdx++;
-            setTimeout(typeEffect, 40);
+    // 1. 剧情文字
+    const story = "相传在18世纪，被囚禁在监狱中的拿破仑将军发明了这种孤独棋。它不考验对手的计谋，只磨炼一个人的耐性与全局观。目标是像统帅那样，通过精准的跳跃消除，让棋盘最后只剩孤身一人。";
+    let i = 0;
+    function type() {
+        if (i < story.length) {
+            document.getElementById("typedText").innerHTML += story.charAt(i);
+            i++; setTimeout(type, 40);
         } else {
-            document.getElementById("startBtn").style.display = "block";
+            document.getElementById("startBtn").style.visibility = "visible";
         }
     }
-    window.onload = typeEffect;
+    window.onload = type;
 
-    // 2. 游戏交互
-    let isFirst = true, selected = null;
+    // 2. 隐藏弹窗
+    document.getElementById("startBtn").onclick = function() {
+        document.getElementById("modalOverlay").style.display = "none";
+        if(navigator.vibrate) navigator.vibrate(50);
+    };
 
-    function startGame() {
-        document.getElementById('modalOverlay').style.opacity = '0';
-        setTimeout(() => document.getElementById('modalOverlay').style.display = 'none', 600);
-        if (navigator.vibrate) navigator.vibrate(50);
-    }
-    document.getElementById('startBtn').onclick = startGame;
-
-    // 3. 棋盘渲染
+    // 3. 棋盘逻辑
     const layout = [
         [0,0,1,1,1,0,0], [0,1,1,1,1,1,0], [1,1,1,1,1,1,1], [1,1,1,1,1,1,1], 
         [1,1,1,1,1,1,1], [0,1,1,1,1,1,0], [0,0,1,1,1,0,0]
     ];
-    
-    let boardHtml = "";
+    let isFirst = true, selected = null;
+    let board = document.getElementById("gameBoard");
+
     layout.forEach((row, y) => {
-        boardHtml += "<tr>";
+        let tr = document.createElement("tr");
         row.forEach((cell, x) => {
+            let td = document.createElement("td");
             if (cell) {
-                boardHtml += `<td class="allNum has-piece" data-x="${x}" data-y="${y}" data-color="${Math.floor(Math.random()*5)+1}"></td>`;
+                td.className = "cell has-piece";
+                td.dataset.x = x; td.dataset.y = y;
+                td.dataset.color = Math.floor(Math.random()*5)+1;
             } else {
-                boardHtml += `<td class="zero"></td>`;
+                td.className = "empty-slot";
             }
+            tr.appendChild(td);
         });
-        boardHtml += "</tr>";
+        board.appendChild(tr);
     });
-    document.getElementById('gameBoard').innerHTML = boardHtml;
 
-    // 4. 逻辑控制
-    document.getElementById('gameBoard').addEventListener('click', (e) => {
-        const cell = e.target.closest('.allNum');
-        if (!cell) return;
+    board.addEventListener("click", e => {
+        const target = e.target.closest(".cell");
+        if (!target) return;
 
+        // 第一步：点击移除一颗
         if (isFirst) {
-            cell.classList.remove('has-piece');
-            addDust(cell);
+            target.classList.remove("has-piece");
+            showPop(target);
             isFirst = false;
-            updateCount();
+            updateUI();
             return;
         }
 
-        if (cell.classList.contains('has-piece')) {
-            if (selected) selected.classList.remove('selected');
-            selected = cell;
-            cell.classList.add('selected');
-        } else if (selected) {
+        // 选中逻辑
+        if (target.classList.contains("has-piece")) {
+            if (selected) selected.classList.remove("selected");
+            selected = target;
+            target.classList.add("selected");
+        } 
+        // 跳跃逻辑
+        else if (selected) {
             const x1 = +selected.dataset.x, y1 = +selected.dataset.y;
-            const x2 = +cell.dataset.x, y2 = +cell.dataset.y;
-            
-            if ((Math.abs(x1-x2)===2 && y1===y2) || (Math.abs(y1-y2)===2 && x1===x2)) {
-                const mx = (x1+x2)/2, my = (y1+y2)/2;
+            const x2 = +target.dataset.x, y2 = +target.dataset.y;
+
+            if ((Math.abs(x1-x2) === 2 && y1 === y2) || (Math.abs(y1-y2) === 2 && x1 === x2)) {
+                const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
                 const mid = document.querySelector(`[data-x="${mx}"][data-y="${my}"]`);
                 
-                if (mid && mid.classList.contains('has-piece')) {
-                    cell.dataset.color = selected.dataset.color;
-                    selected.classList.remove('has-piece', 'selected');
-                    mid.classList.remove('has-piece');
-                    cell.classList.add('has-piece');
-                    addDust(mid);
+                if (mid && mid.classList.contains("has-piece")) {
+                    target.dataset.color = selected.dataset.color;
+                    target.classList.add("has-piece");
+                    selected.classList.remove("has-piece", "selected");
+                    mid.classList.remove("has-piece");
+                    showPop(mid);
                     selected = null;
-                    updateCount();
-                    if (navigator.vibrate) navigator.vibrate(20);
+                    updateUI();
+                    if(navigator.vibrate) navigator.vibrate(30);
                 }
             }
         }
     });
 
-    function addDust(el) {
-        const d = document.createElement('div'); d.className = 'dust';
-        el.appendChild(d);
-        setTimeout(() => d.remove(), 400);
+    function showPop(el) {
+        let d = document.createElement("div"); d.className = "dust";
+        el.appendChild(d); setTimeout(()=>d.remove(), 400);
     }
 
-    function updateCount() {
-        const count = document.querySelectorAll('.has-piece').length;
-        document.getElementById('scoreText').innerText = `残余兵力：${count}`;
-        if(count === 1) alert("伟大的征服者！你赢得了这场博弈。");
+    function updateUI() {
+        const count = document.querySelectorAll(".has-piece").length;
+        document.getElementById("score").innerText = `剩余残兵：${count}`;
+        if (count === 1) alert("天佑统帅！您赢得了这场伟大的孤独博弈！");
     }
 </script>
 </body>
