@@ -1,160 +1,256 @@
 HTML
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Solo Noble - 拿破仑孤独棋</title>
-    <style>
-        :root { --b-s: 90vmin; --c-s: calc(var(--b-s) / 9.5); --gold: #c5a059; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; font-family: "Palatino", "URW Palladio L", "serif"; display: flex; flex-direction: column; justify-content: center; align-items: center; user-select: none; -webkit-user-select: none; }
-        
-        /* 历史叙事弹窗 - 羊皮纸风格 */
-        #napoleon-intro { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #222 0%, #000 100%); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.8s ease; }
-        .parchment { background: #f4e4bc; width: 85%; max-width: 420px; padding: 40px 25px; border-radius: 2px; position: relative; box-shadow: 0 0 100px rgba(0,0,0,0.8); border: 1px solid #d4b483; text-align: center; }
-        .parchment::before { content: ""; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; border: 2px solid #8d6e63; pointer-events: none; opacity: 0.4; }
-        .parchment h2 { color: #4e342e; font-size: 1.8rem; margin: 0 0 20px; letter-spacing: 4px; border-bottom: 2px solid #8d6e63; display: inline-block; padding-bottom: 5px; }
-        .parchment p { color: #5d4037; line-height: 1.8; font-size: 1rem; text-align: justify; margin-bottom: 30px; min-height: 120px; }
-        .btn-enter { background: #4e342e; color: #f4e4bc; border: none; padding: 15px 40px; font-size: 1.1rem; font-weight: bold; cursor: pointer; letter-spacing: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; }
-        .btn-enter:active { transform: scale(0.95); }
+    <style type="text/css">
+        /* 保持你原有的核心样式 */
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100vh;
+            overflow: hidden; 
+            background: #e0e0e0;
+            background-image: radial-gradient(circle, #f0f0f0 0%, #d1d1d1 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', serif;
+            display: flex; justify-content: center; align-items: center;
+            user-select: none; -webkit-user-select: none;
+        }
 
-        /* 游戏本体视觉：暗黑琉璃感 */
-        .game-stage { display: flex; flex-direction: column; align-items: center; gap: 20px; opacity: 0; transition: opacity 1s; }
-        .hud { width: var(--b-s); display: flex; justify-content: space-between; align-items: center; color: var(--gold); font-size: 0.9rem; letter-spacing: 1px; }
-        #board { background: #1a1a1a; padding: 15px; border-radius: 50%; border: 10px solid #2a2a2a; box-shadow: 0 0 50px rgba(0,0,0,0.5); border-spacing: 8px; }
-        .cell { width: var(--c-s); height: var(--c-s); border-radius: 50%; position: relative; background: #0f0f0f; box-shadow: inset 0 0 10px #000; cursor: pointer; }
+        /* 拿破仑历史背景弹窗 */
+        #modalOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; transition: opacity 0.5s;
+        }
+
+        .rules-modal {
+            background: #f4e4bc; /* 羊皮纸色 */
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 380px; width: 85%;
+            text-align: center;
+            border: 5px double #8d6e63;
+            position: relative;
+        }
+
+        .napoleon-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #8d6e63;
+        }
+
+        .history-title {
+            color: #4e342e;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.5rem;
+            margin: 10px 0;
+            border-bottom: 1px solid #8d6e63;
+            padding-bottom: 5px;
+        }
+
+        .history-text {
+            line-height: 1.6;
+            color: #5d4037;
+            text-align: justify;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            min-height: 80px;
+        }
+
+        .confirm-btn {
+            display: block; width: 100%; background: #4e342e; color: #f4e4bc; border: none;
+            padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer;
+            font-size: 1.1em; letter-spacing: 2px; transition: 0.3s;
+        }
+
+        /* 游戏主体样式（沿用你的琉璃版） */
+        .game-wrapper {
+            position: relative;
+            padding: 40px; 
+            transform: scale(min(1, 0.85 * (100vh / 900px)));
+            transform-origin: center center;
+        }
+
+        .controls-top-right {
+            position: absolute; top: 0; right: -120px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+
+        .btn-reset { 
+            background: #8d6e63; color: white; border: none; padding: 12px 25px; 
+            border-radius: 12px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 0 #6d4c41;
+        }
+
+        #scoreText { 
+            margin: 0; padding: 10px 20px; font-size: 1.2em; font-weight: bold; color: #5d4037;
+            background: rgba(255, 255, 255, 0.4); border-radius: 10px;
+        }
+
+        #gameBoard {
+            background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
+            border-spacing: 12px; padding: 40px; border-radius: 50%; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            border: 15px solid #b3865c;
+        }
+
+        .allNum {
+            width: 72px; height: 72px; border-radius: 50%; cursor: pointer; position: relative;
+            background: #5d4037; box-shadow: inset 4px 6px 15px rgba(0,0,0,0.4);
+        }
+
+        .allNum::before {
+            content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; opacity: 0;
+            transition: all 0.25s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        .has-piece::before { opacity: 1; }
         
-        /* 琉璃子渲染 */
-        .piece::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; opacity: 1; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .piece.selected::after { transform: scale(1.2); filter: brightness(1.3) contrast(1.2); box-shadow: 0 0 20px currentColor; z-index: 10; }
-        
-        .p1::after { background: radial-gradient(circle at 30% 30%, #ff5f6d, #890010); color: #ff5f6d; }
-        .p2::after { background: radial-gradient(circle at 30% 30%, #2193b0, #0d47a1); color: #2193b0; }
-        .p3::after { background: radial-gradient(circle at 30% 30%, #11998e, #1b5e20); color: #11998e; }
-        .p4::after { background: radial-gradient(circle at 30% 30%, #ffb347, #e65100); color: #ffb347; }
-        .p5::after { background: radial-gradient(circle at 30% 30%, #a18cd1, #4a148c); color: #a18cd1; }
-        
-        .empty::after { opacity: 0; transform: scale(0); }
-        .void { visibility: hidden; }
-        
-        /* 动画 */
-        .dust { position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.2); border-radius: 50%; animation: blow 0.5s ease-out forwards; pointer-events: none; }
-        @keyframes blow { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(3); opacity: 0; } }
+        /* 琉璃色彩 */
+        .allNum[data-color="1"]::before { background: radial-gradient(circle at 40% 40%, #ff4d6d, #c9184a); }
+        .allNum[data-color="2"]::before { background: radial-gradient(circle at 40% 40%, #00b4d8, #0077b6); }
+        .allNum[data-color="3"]::before { background: radial-gradient(circle at 40% 40%, #70e000, #38b000); }
+        .allNum[data-color="4"]::before { background: radial-gradient(circle at 40% 40%, #ffb703, #fb8500); }
+        .allNum[data-color="5"]::before { background: radial-gradient(circle at 40% 40%, #bdb2ff, #9381ff); }
+
+        .selected::before { transform: scale(1.15) translateY(-8px); filter: brightness(1.2); }
+        .zero { width: 72px; height: 72px; }
+        .dust-cloud { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; background: rgba(210,166,121,0.6); border-radius: 50%; animation: dust-pop 0.5s forwards; }
+        @keyframes dust-pop { 0% { transform: translate(-50%,-10%) scale(0.3); opacity:0; } 100% { transform: translate(-50%,-150%) scale(4); opacity:0; } }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
 
-<div id="napoleon-intro">
-    <div class="parchment">
-        <h2>SOLO NOBLE</h2>
-        <p id="typed-text"></p>
-        <button class="btn-enter" id="btnStart" style="display: none;">开启孤独博弈</button>
+<div id="modalOverlay">
+    <div class="rules-modal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg/640px-David_-_Napoleon_at_the_Saint-Bernard_Pass.jpg" class="napoleon-img" alt="Napoleon">
+        <h2 class="history-title">Solo Noble</h2>
+        <p class="history-text" id="typeWriter"></p>
+        <button class="confirm-btn" id="startBtn" style="display:none">接受挑战</button>
     </div>
 </div>
 
-<div class="game-stage" id="stage">
-    <div class="hud">
-        <span id="counter">REMAINING: 37</span>
-        <span style="border: 1px solid var(--gold); padding: 2px 8px; cursor: pointer;" onclick="location.reload()">RESET</span>
+<div class="game-wrapper">
+    <div class="controls-top-right">
+        <button class="btn-reset" onclick="location.reload()">重新打乱</button>
+        <p id="scoreText">剩余棋子：37</p>
     </div>
-    <table id="board"></table>
+    <table id="gameBoard"></table>
 </div>
 
 <script>
-    // 1. 历史背景文案（打字机效果解密）
-    const story = "1789年，法国大革命的硝烟笼罩了巴士底狱。传说一位被放逐的贵族，在幽暗的囚室中改造了古老的十字棋盘，增加了四个变幻莫测的孔位。这37孔的「孤独棋」随后成为拿破仑行军途中最爱的逻辑试炼。现在，请移除第一颗琉璃子，于方圆之间，破阵突围。";
-    let i = 0;
-    function typeWriter() {
-        if (i < story.length) {
-            document.getElementById("typed-text").innerHTML += story.charAt(i);
-            i++;
-            setTimeout(typeWriter, 40);
+    // 历史介绍文字
+    const introText = "这种独特的37孔棋盘，被誉为「拿破仑孤独棋」。传说它诞生于巴士底狱的幽暗囚室，是统帅在戎马倥偬中磨砺智慧与意志的最佳伙伴。规则：跳过并移除棋子，直到这片疆场只剩最后一颗琉璃。";
+    let textIdx = 0;
+
+    function startTyping() {
+        if (textIdx < introText.length) {
+            document.getElementById("typeWriter").innerHTML += introText.charAt(textIdx);
+            textIdx++;
+            setTimeout(startTyping, 50);
         } else {
-            document.getElementById("btnStart").style.display = "block";
+            document.getElementById("startBtn").style.display = "block";
         }
     }
-    window.onload = typeWriter;
 
-    // 2. 核心逻辑混淆加密
-    const _Game = (function() {
-        let _st = 0, _sel = null;
-        // 37孔欧式布局
-        const _map = [
-            [0,0,1,1,1,0,0], [0,1,1,1,1,1,0], [1,1,1,1,1,1,1], [1,1,1,1,1,1,1], 
-            [1,1,1,1,1,1,1], [0,1,1,1,1,1,0], [0,0,1,1,1,0,0]
-        ];
+    // 启动打字机效果
+    window.onload = startTyping;
 
-        return {
-            build: function() {
-                const b = document.getElementById('board');
-                let html = "";
-                for(let y=0; y<7; y++){
-                    html += "<tr>";
-                    for(let x=0; x<7; x++){
-                        const idx = y*7+x;
-                        const state = _map[y][x];
-                        if(state === 1) {
-                            html += `<td class="cell piece p${Math.floor(Math.random()*5)+1}" data-x="${x}" data-y="${y}"></td>`;
-                        } else {
-                            html += `<td class="cell void"></td>`;
-                        }
-                    }
-                    html += "</tr>";
-                }
-                b.innerHTML = html;
-            },
-            tap: function(e) {
-                const el = e.target.closest('.piece');
-                if(!el) return;
-
-                if(_st === 0) { // 移除第一颗
-                    el.classList.replace('piece', 'empty');
-                    _st = 1;
-                    this.upd();
-                    return;
-                }
-
-                if(el.classList.contains('empty')) {
-                    if(!_sel) return;
-                    const x1 = +_sel.dataset.x, y1 = +_sel.dataset.y;
-                    const x2 = +el.dataset.x, y2 = +el.dataset.y;
-                    if(Math.abs(x1-x2) + Math.abs(y1-y2) === 2 && (x1===x2 || y1===y2)) {
-                        const mx = (x1+x2)/2, my = (y1+y2)/2;
-                        const mid = document.querySelector(`[data-x="${mx}"][data-y="${my}"]`);
-                        if(mid && mid.classList.contains('piece')) {
-                            // 执行跳跃
-                            el.className = _sel.className;
-                            el.classList.remove('selected');
-                            _sel.className = 'cell empty';
-                            mid.className = 'cell empty';
-                            // 视觉反馈
-                            const d = document.createElement('div'); d.className='dust'; mid.appendChild(d);
-                            _sel = null; this.upd();
-                        }
-                    }
-                } else {
-                    if(_sel) _sel.classList.remove('selected');
-                    _sel = el;
-                    el.classList.add('selected');
-                }
-            },
-            upd: function() {
-                document.getElementById('counter').innerText = `REMAINING: ${document.querySelectorAll('.piece').length}`;
-            }
-        };
-    })();
-
-    // 3. 启动交互
-    document.getElementById('btnStart').onclick = () => {
-        document.getElementById('napoleon-intro').style.opacity = '0';
+    function startGame() {
+        document.getElementById('modalOverlay').style.opacity = '0';
         setTimeout(() => {
-            document.getElementById('napoleon-intro').style.display = 'none';
-            document.getElementById('stage').style.opacity = '1';
-            _Game.build();
-        }, 800);
-    };
+            document.getElementById('modalOverlay').style.display = 'none';
+            _vibrate(50);
+        }, 500);
+    }
+    document.getElementById('startBtn').onclick = startGame;
 
-    document.getElementById('board').onclick = (e) => _Game.tap(e);
+    function _vibrate(ms) { if (navigator.vibrate) navigator.vibrate(ms); }
+
+    // 棋盘生成逻辑 (37孔欧式)
+    const rows = [
+        [null, null, [2,7], [3,7], [4,7], null, null],
+        [null, [1,6], [2,6], [3,6], [4,6], [5,6], null],
+        [[0,5], [1,5], [2,5], [3,5], [4,5], [5,5], [6,5]],
+        [[0,4], [1,4], [2,4], [3,4], [4,4], [5,4], [6,4]],
+        [[0,3], [1,3], [2,3], [3,3], [4,3], [5,3], [6,3]],
+        [null, [1,2], [2,2], [3,2], [4,2], [5,2], null],
+        [null, null, [2,1], [3,1], [4,1], null, null]
+    ];
+    
+    let isFirst = true;
+    let selected = null;
+    let html = "";
+    rows.forEach(row => {
+        html += "<tr>";
+        row.forEach(cell => {
+            if (cell) {
+                html += `<td class="allNum has-piece" data-x="${cell[0]}" data-y="${cell[1]}" data-color="${Math.floor(Math.random()*5)+1}"></td>`;
+            } else {
+                html += `<td class="zero"></td>`;
+            }
+        });
+        html += "</tr>";
+    });
+    document.getElementById('gameBoard').innerHTML = html;
+
+    function triggerDust(el) {
+        const dust = document.createElement('div');
+        dust.className = 'dust-cloud';
+        el.appendChild(dust);
+        setTimeout(() => dust.remove(), 500);
+    }
+
+    document.getElementById('gameBoard').addEventListener('click', (e) => {
+        const cell = e.target.closest('.allNum');
+        if (!cell) return;
+
+        if (isFirst) {
+            cell.classList.remove('has-piece');
+            triggerDust(cell);
+            isFirst = false;
+            updateUI();
+            return;
+        }
+
+        if (cell.classList.contains('has-piece')) {
+            if (selected) selected.classList.remove('selected');
+            selected = cell;
+            cell.classList.add('selected');
+        } else if (selected) {
+            const x1 = +selected.dataset.x, y1 = +selected.dataset.y;
+            const x2 = +cell.dataset.x, y2 = +cell.dataset.y;
+            if ((Math.abs(x1-x2)===2 && y1===y2) || (Math.abs(y1-y2)===2 && x1===x2)) {
+                const mid = document.querySelector(`[data-x="${(x1+x2)/2}"][data-y="${(y1+y2)/2}"]`);
+                if (mid && mid.classList.contains('has-piece')) {
+                    cell.dataset.color = selected.dataset.color;
+                    selected.classList.remove('has-piece', 'selected');
+                    mid.classList.remove('has-piece');
+                    cell.classList.add('has-piece');
+                    triggerDust(mid);
+                    selected = null;
+                    updateUI();
+                }
+            }
+        }
+    });
+
+    function updateUI() {
+        const count = document.querySelectorAll('.has-piece').length;
+        document.getElementById('scoreText').innerText = `剩余棋子：${count}`;
+        if(count === 1) {
+            alert('统帅之才！你完成了拿破仑的试炼！');
+        }
+    }
 </script>
 </body>
 </html>
