@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>明亮糖果琉璃版 - 孤独棋</title>
+    <style type="text/css">
+        /* 2. 定义响应式变量 */
+        :root {
+            /* 核心逻辑：棋盘大小取横纵尺寸中较小者的 90% */
+            --board-size: 85vmin; 
+            --cell-size: calc(var(--board-size) / 9);
+            --piece-real-size: calc(var(--cell-size) * 0.85);
+        }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; 
+            background: #e0e0e0;
+            background-image: radial-gradient(circle, #f0f0f0 0%, #d1d1d1 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            display: flex;
+            flex-direction: column; /* 手机端改为上下布局 */
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 弹窗遮罩层优化 */
+        #modalOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .rules-modal {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            width: 80%;
+            max-width: 350px;
+            border: 1px solid white;
+        }
+
+        .confirm-btn {
+            display: block; width: 100%; background: #8d6e63; color: white; border: none;
+            padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer;
+            margin-top: 20px; font-size: 1.1em;
+        }
+
+        /* 3. 游戏容器自适应：改为 Flex 布局 */
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2vh;
+            position: relative;
+        }
+
+        /* 4. 控制区重构：电脑端悬浮，手机端居中 */
+        .controls-top-right {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: var(--board-size);
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        /* PC端如果屏幕够宽，让控制区回到侧边 */
+        @media (min-aspect-ratio: 1.2/1) {
+            .controls-top-right {
+                position: absolute;
+                right: -25%; /* 侧边对齐 */
+                top: 50%;
+                transform: translateY(-50%);
+                flex-direction: column;
+                width: auto;
+                gap: 30px;
+            }
+        }
+
+        .btn-reset { 
+            background: #8d6e63; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 10px;
+            cursor: pointer; 
+            font-weight: bold;
+            box-shadow: 0 4px 0 #6d4c41; 
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+        .btn-reset:active { transform: translateY(3px); box-shadow: none; }
+
+        #scoreText { 
+            margin: 0; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            color: #5d4037;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 8px 15px;
+            border-radius: 10px;
+            white-space: nowrap; 
+        }
+
+        /* 5. 棋盘：放弃 Table，使用响应式尺寸 */
+        #gameBoard {
+            background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
+            padding: 2vmin;
+            border-radius: 50%; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 -5px 10px rgba(0,0,0,0.2);
+            border: 1.5vmin solid #b3865c;
+            border-collapse: separate;
+            border-spacing: 1vmin;
+        }
+
+        .allNum {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            background: #5d4037;
+            box-shadow: inset 2px 3px 8px rgba(0,0,0,0.4);
+        }
+
+        .allNum::before {
+            content: ""; display: block; 
+            width: 100%; height: 100%; 
+            border-radius: 50%; opacity: 0;
+            box-shadow: inset 0 -8px 15px rgba(255,255,255,0.35), inset 0 5px 10px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s cubic-bezier(0.1, 0.7, 0.1, 1);
+            z-index: 2;
+        }
+
+        /* 光晕点 */
+        .allNum::after {
+            content: ""; position: absolute; top: 18%; left: 25%; width: 15%; height: 10%;
+            background: rgba(255, 255, 255, 0.7); border-radius: 50%; transform: rotate(-25deg);
+            filter: blur(1px); opacity: 0; pointer-events: none; z-index: 3;
+        }
+
+        .has-piece::before, .has-piece::after { opacity: 1; }
+
+        /* 选中态适配 */
+        .selected::before {
+            transform: scale(1.15) translateY(-5%);
+            filter: brightness(1.2);
+            box-shadow: inset 0 -10px 20px rgba(255,255,255,0.5), 0 10px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* 琉璃色梯度 */
+        .allNum[data-color="1"]::before { background: radial-gradient(circle at 40% 40%, #ff4d6d, #c9184a); }
+        .allNum[data-color="2"]::before { background: radial-gradient(circle at 40% 40%, #00b4d8, #0077b6); }
+        .allNum[data-color="3"]::before { background: radial-gradient(circle at 40% 40%, #70e000, #38b000); }
+        .allNum[data-color="4"]::before { background: radial-gradient(circle at 40% 40%, #ffb703, #fb8500); }
+        .allNum[data-color="5"]::before { background: radial-gradient(circle at 40% 40%, #bdb2ff, #9381ff); }
+
+        .dust-cloud {
+            position: absolute; top: 50%; left: 50%; width: 20%; height: 20%;
+            background: rgba(210, 166, 121, 0.6); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
+            animation: dust-pop 0.4s ease-out forwards;
+        }
+        @keyframes dust-pop {
+            0% { transform: translate(-50%, -10%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -150%) scale(4); opacity: 0; filter: blur(5px); }
+        }
+        .zero { width: var(--cell-size); height: var(--cell-size); }
+    </style>
+</head>
+<body>
+
+<div id="modalOverlay">
+    <div class="rules-modal">
+        <h2 style="text-align:center; margin-top:0;">玩法介绍</h2>
+        <ul style="line-height: 1.8; color: #5d4037; padding-left: 20px;">
+            <li>点击第1颗珠子将其移除。</li>
+            <li>跳过相邻珠子落入空位。</li>
+            <li>被跳过的珠子会消失。</li>
+            <li>目标：最后只剩<b style="color:#c9184a">一颗</b>。</li>
+        </ul>
+        <button class="confirm-btn" onclick="startGame()">开始游戏</button>
+    </div>
+</div>
+
+<div class="game-wrapper">
+    <div class="controls-top-right">
+        <button class="btn-reset" onclick="location.reload()">重新打乱</button>
+        <p id="scoreText">剩余棋子：37</p>
+    </div>
+
+    <table id="gameBoard"></table>
+</div>
+
+<script>
+    let isFirst = true;
+    let selected = null;
+
+    function startGame() {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    // 坐标映射
+    const rows = [
+        [null, null, [2,7], [3,7], [4,7], null, null],
+        [null, [1,6], [2,6], [3,6], [4,6], [5,6], null],
+        [[0,5], [1,5], [2,5], [3,5], [4,5], [5,5], [6,5]],
+        [[0,4], [1,4], [2,4], [3,4], [4,4], [5,4], [6,4]],
+        [[0,3], [1,3], [2,3], [3,3], [4,3], [5,3], [6,3]],
+        [null, [1,2], [2,2], [3,2], [4,2], [5,2], null],
+        [null, null, [2,1], [3,1], [4,1], null, null]
+    ];
+    
+    let html = "";
+    rows.forEach(row => {
+        html += "<tr>";
+        row.forEach(cell => {
+            if (cell) {
+                html += `<td class="allNum has-piece" data-x="${cell[0]}" data-y="${cell[1]}" data-color="${Math.floor(Math.random()*5)+1}"></td>`;
+            } else {
+                html += `<td class="zero"></td>`;
+            }
+        });
+        html += "</tr>";
+    });
+    document.getElementById('gameBoard').innerHTML = html;
+
+    function triggerDust(el) {
+        const dust = document.createElement('div');
+        dust.className = 'dust-cloud';
+        el.appendChild(dust);
+        setTimeout(() => dust.remove(), 400);
+    }
+
+    document.getElementById('gameBoard').addEventListener('click', (e) => {
+        const cell = e.target.closest('.allNum');
+        if (!cell) return;
+
+        if (isFirst) {
+            cell.classList.remove('has-piece');
+            triggerDust(cell);
+            isFirst = false;
+            updateUI();
+            return;
+        }
+
+        if (cell.classList.contains('has-piece')) {
+            if (selected) selected.classList.remove('selected');
+            selected = cell;
+            cell.classList.add('selected');
+        } else if (selected) {
+            const x1 = +selected.dataset.x, y1 = +selected.dataset.y;
+            const x2 = +cell.dataset.x, y2 = +cell.dataset.y;
+            
+            if ((Math.abs(x1-x2) === 2 && y1===y2) || (Math.abs(y1-y2) === 2 && x1===x2)) {
+                const mid = document.querySelector(`[data-x="${(x1+x2)/2}"][data-y="${(y1+y2)/2}"]`);
+                if (mid && mid.classList.contains('has-piece')) {
+                    cell.dataset.color = selected.dataset.color;
+                    selected.classList.remove('has-piece', 'selected');
+                    mid.classList.remove('has-piece');
+                    cell.classList.add('has-piece');
+                    triggerDust(mid);
+                    selected = null;
+                    updateUI();
+                }
+            }
+        }
+    });
+
+    function updateUI() {
+        document.getElementById('scoreText').innerText = `剩余棋子：${document.querySelectorAll('.has-piece').length}`;
+    }
+</script>
+</body>
+</html>
