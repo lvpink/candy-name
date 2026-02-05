@@ -126,8 +126,8 @@
 
 <div class="game-wrapper">
     <div class="controls-top">
-        <p id="scoreText">剩余珠子：37</p>
-        <button class="confirm-btn" onclick="resetGame()">重新洗牌</button>
+        <p id="scoreText">剩余骑士：37</p>
+        <button class="confirm-btn" onclick="resetGame()">重新开始</button>
     </div>
     
     <table id="gameBoard"></table>
@@ -170,7 +170,7 @@
     }
 
     function resetGame() { 
-        if(confirm("确定要重新开始吗？")) initBoard(); 
+       initBoard(); 
     }
     
     function closeModal() { 
@@ -180,7 +180,7 @@
     }
 
     function updateUI() { 
-        document.getElementById('scoreText').innerText = `剩余珠子：${document.querySelectorAll('.has-piece').length}`; 
+        document.getElementById('scoreText').innerText = `剩余骑士：${document.querySelectorAll('.has-piece').length}`; 
     }
 
     function triggerDust(el) {
