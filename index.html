@@ -1,142 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>琉璃孤独棋 - 增强版</title>
+    <title>琉璃孤独棋 - 最终完美适配版</title>
     <style type="text/css">
+        /* 基础样式复位 */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background: #e0e0e0;
             background-image: radial-gradient(circle, #f0f0f0 0%, #d1d1d1 100%);
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            display: flex; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             user-select: none; -webkit-user-select: none;
         }
 
-        /* 水印层：淡淡的标识 */
-        .watermark {
-            position: absolute; bottom: 10px; right: 20px;
-            font-size: 12px; color: rgba(0,0,0,0.1);
-            pointer-events: none; z-index: 1;
-        }
-
-        /* 弹窗样式 */
+        /* --- 弹窗样式优化：高度增加，图片展示完整 --- */
         #modalOverlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 1000;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 1000;
         }
         .rules-modal {
-            background: rgba(255, 255, 255, 0.95); width: 85%; max-width: 380px;
-            border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.98); width: 88%; max-width: 420px;
+            border-radius: 30px; box-shadow: 0 25px 70px rgba(0,0,0,0.5);
             overflow: hidden; animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
         }
         .modal-header-img {
-            width: 100%; height: 160px;
-            background: linear-gradient(rgba(93, 64, 55, 0.3), rgba(93, 64, 55, 0.1)),
-                        url('https://www.transparenttextures.com/patterns/wood-pattern-7.png'), #d2a679;
-            display: flex; justify-content: center; align-items: center; border-bottom: 3px solid #b3865c;
-        }
-        .modal-header-img::after {
-            content: ""; width: 85%; height: 85%;
-            background: url('http://picnew11.photophoto.cn/20170315/napolun-22544446_1.jpg') no-repeat center;
-            background-size: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
-        }
-
-        /* 游戏区域 */
-        .game-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
-        .controls-top { display: flex; align-items: center; gap: 15px; margin: 15px 0; z-index: 10; }
-        #scoreText { margin: 0; padding: 8px 20px; font-size: 1.2em; font-weight: bold; color: #5d4037; background: rgba(255, 255, 255, 0.5); border-radius: 12px; }
-        .confirm-btn { display: block; width: 100%; background: #8d6e63; color: white; border: none; padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-
-        /* 棋盘与棋子自适应 */
-        #gameBoard {
+            width: 100%; height: 240px; /* 增加高度以完整容纳拿破仑 */
             background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
-            border-spacing: min(1.5vw, 12px); padding: min(4vw, 35px); border-radius: 50%;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25), inset 0 -8px 15px rgba(0,0,0,0.2);
-            border: min(2.5vw, 15px) solid #b3865c; max-width: 95vmin; max-height: 75vh;
+            display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #b3865c;
             position: relative;
         }
+        .modal-header-img::after {
+            content: ""; width: 92%; height: 92%;
+            background: url('http://picnew11.photophoto.cn/20170315/napolun-22544446_1.jpg') no-repeat center;
+            background-size: contain; /* 确保拿破仑图片完整展示 */
+            filter: drop-shadow(0 8px 20px rgba(0,0,0,0.3));
+        }
+
+        /* 游戏主体容器：全平台自适应核心 */
+        .game-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; height: 100%; justify-content: center; 
+            padding: 20px; box-sizing: border-box; gap: 3vh;
+        }
+
+        .controls-top { display: flex; align-items: center; gap: 15px; z-index: 10; }
+        #scoreText { 
+            margin: 0; padding: 12px 28px; font-size: 1.2em; font-weight: bold; color: #5d4037; 
+            background: rgba(255, 255, 255, 0.7); border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .confirm-btn { 
+            background: #8d6e63; color: white; border: none; padding: 12px 22px; 
+            border-radius: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .confirm-btn:active { transform: scale(0.95); }
+
+        /* --- 棋盘全端适配：手机撑满，电脑不显小 --- */
+        #gameBoard {
+            background: #d2a679 url('https://www.transparenttextures.com/patterns/wood-pattern-7.png');
+            /* 使用 vmin 自动感应屏幕短边，确保两端都“刚好” */
+            border-spacing: 1.3vmin; 
+            padding: 2.5vmin; 
+            border-radius: 50%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3), inset 0 -5px 15px rgba(0,0,0,0.2);
+            border: 1.8vmin solid #b3865c;
+            
+            /* 关键逻辑：手机取屏幕90%左右，电脑最大锁在600px */
+            width: clamp(320px, 90vmin, 600px);
+            height: clamp(320px, 90vmin, 600px);
+            table-layout: fixed;
+        }
+
+        /* 珠子质感适配 */
         .allNum {
-            width: clamp(35px, 8.5vmin, 72px); height: clamp(35px, 8.5vmin, 72px);
-            border-radius: 50%; cursor: pointer; position: relative; background: #5d4037;
-            box-shadow: inset 4px 6px 15px rgba(0,0,0,0.4);
+            width: 11%; height: 11%; border-radius: 50%; cursor: pointer; position: relative;
+            background: #5d4037; box-shadow: inset 2px 3px 8px rgba(0,0,0,0.4);
         }
         .allNum::before {
             content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; opacity: 0;
-            box-shadow: inset 0 -15px 25px rgba(255,255,255,0.35), inset 0 10px 20px rgba(0,0,0,0.2), 0 8px 15px rgba(0,0,0,0.3);
-            transition: all 0.25s cubic-bezier(0.1, 0.7, 0.1, 1);
+            box-shadow: inset 0 -8px 15px rgba(255,255,255,0.3), inset 0 5px 10px rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
         }
         .allNum::after {
-            content: ""; position: absolute; top: 18%; left: 25%; width: 15%; height: 10%;
-            background: rgba(255, 255, 255, 0.7); border-radius: 50%; transform: rotate(-25deg); filter: blur(1px); opacity: 0;
+            content: ""; position: absolute; top: 15%; left: 20%; width: 25%; height: 20%;
+            background: rgba(255, 255, 255, 0.6); border-radius: 50%; filter: blur(1px); opacity: 0;
         }
         .has-piece::before, .has-piece::after { opacity: 1; }
-        .selected::before { transform: scale(1.15) translateY(-6px); filter: brightness(1.2); }
-        .allNum[data-color="1"]::before { background: radial-gradient(circle at 40% 40%, #ff4d6d, #c9184a); }
-        .allNum[data-color="2"]::before { background: radial-gradient(circle at 40% 40%, #00b4d8, #0077b6); }
-        .allNum[data-color="3"]::before { background: radial-gradient(circle at 40% 40%, #70e000, #38b000); }
-        .allNum[data-color="4"]::before { background: radial-gradient(circle at 40% 40%, #ffb703, #fb8500); }
-        .allNum[data-color="5"]::before { background: radial-gradient(circle at 40% 40%, #bdb2ff, #9381ff); }
+        .selected::before { transform: scale(1.15); filter: brightness(1.35); box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        
+        /* 珠子颜色库 */
+        .allNum[data-color="1"]::before { background: radial-gradient(circle at 35% 35%, #ff4d6d, #c9184a); }
+        .allNum[data-color="2"]::before { background: radial-gradient(circle at 35% 35%, #00b4d8, #0077b6); }
+        .allNum[data-color="3"]::before { background: radial-gradient(circle at 35% 35%, #70e000, #38b000); }
+        .allNum[data-color="4"]::before { background: radial-gradient(circle at 35% 35%, #ffb703, #fb8500); }
+        .allNum[data-color="5"]::before { background: radial-gradient(circle at 35% 35%, #bdb2ff, #9381ff); }
 
-        /* 特效与动画 */
-        .dust-cloud { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; background: rgba(210, 166, 121, 0.6); border-radius: 50%; transform: translate(-50%, -50%); animation: dust-pop 0.5s ease-out forwards; }
-        @keyframes dust-pop { 0% { transform: translate(-50%, -10%) scale(0.3); opacity: 0; } 100% { transform: translate(-50%, -150%) scale(4); opacity: 0; filter: blur(10px); } }
-        @keyframes modalPop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-        .zero { width: clamp(35px, 8.5vmin, 72px); height: clamp(35px, 8.5vmin, 72px); }
+        .zero { width: 11%; height: 11%; }
+
+        /* 消除动画 */
+        .dust-cloud { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; background: rgba(210,166,121,0.6); border-radius: 50%; transform: translate(-50%, -50%); animation: dust-pop 0.5s forwards; }
+        @keyframes dust-pop { 0% { transform: translate(-50%, -10%) scale(0.3); opacity: 0; } 100% { transform: translate(-50%, -150%) scale(3); opacity: 0; filter: blur(5px); } }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        
+        .watermark { position: absolute; bottom: 10px; font-size: 10px; color: rgba(0,0,0,0.15); pointer-events: none; }
     </style>
 </head>
-<body oncontextmenu="return false" ondragstart="return false">
-
-<div class="watermark">琉璃孤独棋 @ Original Design</div>
+<body oncontextmenu="return false">
 
 <div id="modalOverlay">
     <div class="rules-modal">
         <div class="modal-header-img"></div>
-        <div class="modal-content" style="padding: 25px;">
-            <h2 style="text-align:center; margin-top:0; color:#5d4037;">琉璃孤独棋</h2>
-            <ul style="line-height: 1.8; color: #5d4037; font-size: 0.95em; padding-left: 20px;">
-                <li>移除第一颗珠子开始。</li>
-                <li>跳过珠子落入空位即消除。</li>
-                <li>最终剩一颗即为挑战成功！</li>
-            </ul>
-            <button class="confirm-btn" onclick="closeModal()">进入挑战</button>
+        <div class="modal-content" style="padding: 30px; text-align: center;">
+            <h2 style="margin:0 0 15px 0; color:#5d4037; letter-spacing: 2px;">琉璃孤独棋</h2>
+            <p style="color:#6d4c41; font-size:1em; line-height:1.7; text-align: left;">
+                1. 点击移除任意一颗珠子开始游戏。<br>
+                2. 跳过一颗珠子并落入空位即可消除它。<br>
+                3. 努力消除，直到棋盘只剩最后一颗琉璃珠！
+            </p>
+            <button class="confirm-btn" style="width: 100%; margin-top: 20px; font-size: 1.1em;" onclick="closeModal()">开始挑战</button>
         </div>
     </div>
 </div>
 
 <div class="game-wrapper">
     <div class="controls-top">
-        <p id="scoreText">剩余棋子：37</p>
-        <button class="confirm-btn" style="margin:0; padding:8px 15px; width:auto; font-size: 0.9em;" onclick="resetGame()">重新打乱</button>
+        <p id="scoreText">剩余珠子：37</p>
+        <button class="confirm-btn" onclick="resetGame()">重新洗牌</button>
     </div>
+    
     <table id="gameBoard"></table>
 </div>
 
+<div class="watermark">Copyright © 琉璃工艺孤独棋 完美适配版</div>
+
 <script>
-    /* --- 防抄袭脚本第一层：屏蔽键盘快捷键 --- */
-    document.onkeydown = function(e) {
-        if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) {
-            return false;
-        }
-    };
+    /* 核心逻辑与防抄袭 */
+    document.onkeydown = e => { if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false; };
+    setInterval(() => { (function(){ debugger; })(); }, 3000);
 
- 
-    setInterval(function() {
-        (function(_0xabc) {
-            return (function(_0xdef) {
-                return (function(_0xghi) {
-                    if (!!_0xghi) return;
-                    debugger;
-                })(true);
-            })(false);
-        })();
-    }, 2000);
-
-    /* --- 核心游戏逻辑 --- */
-    let isFirstRemoval = true;
-    let selected = null;
-    const boardLayout = [
+    let isFirst = true, selected = null;
+    const layout = [
         [null, null, [2,7], [3,7], [4,7], null, null],
         [null, [1,6], [2,6], [3,6], [4,6], [5,6], null],
         [[0,5], [1,5], [2,5], [3,5], [4,5], [5,5], [6,5]],
@@ -148,7 +153,7 @@
 
     function initBoard() {
         let html = "";
-        boardLayout.forEach(row => {
+        layout.forEach(row => {
             html += "<tr>";
             row.forEach(cell => {
                 if (cell) {
@@ -161,57 +166,62 @@
             html += "</tr>";
         });
         document.getElementById('gameBoard').innerHTML = html;
-        isFirstRemoval = true;
-        selected = null;
-        updateUI();
+        isFirst = true; selected = null; updateUI();
     }
 
-    function resetGame() { initBoard(); }
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-    function updateUI() {
-        const count = document.querySelectorAll('.has-piece').length;
-        document.getElementById('scoreText').innerText = `剩余棋子：${count}`;
+    function resetGame() { 
+        if(confirm("确定要重新开始吗？")) initBoard(); 
     }
+    
+    function closeModal() { 
+        document.getElementById('modalOverlay').style.transition = '0.3s';
+        document.getElementById('modalOverlay').style.opacity = '0';
+        setTimeout(() => { document.getElementById('modalOverlay').style.display = 'none'; }, 300);
+    }
+
+    function updateUI() { 
+        document.getElementById('scoreText').innerText = `剩余珠子：${document.querySelectorAll('.has-piece').length}`; 
+    }
+
     function triggerDust(el) {
-        const dust = document.createElement('div');
-        dust.className = 'dust-cloud';
-        el.appendChild(dust);
-        setTimeout(() => dust.remove(), 500);
+        const d = document.createElement('div'); d.className = 'dust-cloud';
+        el.appendChild(d); setTimeout(() => d.remove(), 500);
     }
 
-    document.getElementById('gameBoard').addEventListener('click', (e) => {
+    document.getElementById('gameBoard').addEventListener('click', e => {
         const cell = e.target.closest('.allNum');
         if (!cell) return;
 
-        if (isFirstRemoval) {
-            cell.classList.remove('has-piece');
+        // 第一步：移除一颗开始
+        if (isFirst) {
+            cell.classList.remove('has-piece'); 
             triggerDust(cell);
-            isFirstRemoval = false;
-            updateUI();
-            return;
+            isFirst = false; updateUI(); return;
         }
 
+        // 选中珠子逻辑
         if (cell.classList.contains('has-piece')) {
             if (selected) selected.classList.remove('selected');
-            selected = cell;
-            cell.classList.add('selected');
-        } else if (selected) {
-            const _x1 = +selected.dataset.x, _y1 = +selected.dataset.y;
-            const _x2 = +cell.dataset.x, _y2 = +cell.dataset.y;
-            const isV = (Math.abs(_x1 - _x2) === 2 && _y1 === _y2);
-            const isH = (Math.abs(_y1 - _y2) === 2 && _x1 === _x2);
-
-            if (isV || isH) {
-                const mid = document.querySelector(`[data-x="${(_x1+_x2)/2}"][data-y="${(_y1+_y2)/2}"]`);
+            selected = cell; cell.classList.add('selected');
+        } 
+        // 移动逻辑
+        else if (selected) {
+            const x1 = +selected.dataset.x, y1 = +selected.dataset.y;
+            const x2 = +cell.dataset.x, y2 = +cell.dataset.y;
+            
+            // 判断是否是跳过一格
+            if ((Math.abs(x1-x2)===2 && y1===y2) || (Math.abs(y1-y2)===2 && x1===x2)) {
+                const midX = (x1+x2)/2, midY = (y1+y2)/2;
+                const mid = document.querySelector(`[data-x="${midX}"][data-y="${midY}"]`);
+                
                 if (mid && mid.classList.contains('has-piece')) {
                     cell.dataset.color = selected.dataset.color;
                     selected.classList.remove('has-piece', 'selected');
-                    mid.classList.remove('has-piece');
+                    mid.classList.remove('has-piece'); 
                     cell.classList.add('has-piece');
-                    triggerDust(mid);
-                    selected = null;
+                    triggerDust(mid); 
+                    selected = null; 
                     updateUI();
-                    if(document.querySelectorAll('.has-piece').length === 1) alert('天才！');
                 }
             }
         }
